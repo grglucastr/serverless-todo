@@ -4,4 +4,7 @@ import { APIGatewayProxyEvent, APIGatewayProxyResult, APIGatewayProxyHandler } f
 
 export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   // TODO: Get all TODO items for a current user
+  console.log('event: ', event);
+  
+  return undefined;
 }

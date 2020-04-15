@@ -3,10 +3,11 @@ service:
 
 plugins:
   - serverless-iam-roles-per-function
+  - serverless-webpack
 
 provider:
   name: aws
-  runtime: nodejs8.10
+  runtime: nodejs12.x
 
   stage: ${opt:stage, 'dev'}
   region: ${opt:region, 'us-east-1'}
@@ -15,16 +16,30 @@ provider:
     TODOS_TABLE: Todos-${self:provider.stage}
     INDEX_NAME: grg-todo-id-idx
 
+package:
+  individually: true
+
+functions:
+  GetTodos:
+    handler: src/lambda/http/getTodos.handler
+    events:
+      -
+        http:
+          method: get
+          path: todos
+
 resources:
   Resources:
-    TodosTable:
+    ServerlessTodoTable:
       Type: AWS::DynamoDB::Table
       Properties:
+        TableName: ${self:provider.environment.TODOS_TABLE}
+        BillingMode: PAY_PER_REQUEST
         AttributeDefinitions:
           -
             AttributeName: userId
             AttributeType: S
-          - 
+          -
             AttributeName: timestamp
             AttributeType: S
           -
@@ -37,17 +52,20 @@ resources:
           -
             AttributeName: timestamp
             KeyType: RANGE
-        BillingMode: PAY_PER_REQUEST
-        TableName: ${self:provider.environment.TODOS_TABLE}
         LocalSecondaryIndexes:
-          - 
+          -
             IndexName: ${self:provider.environment.INDEX_NAME}
             KeySchema:
-              -
+              - 
                 AttributeName: userId
                 KeyType: HASH
-              -
+              - 
                 AttributeName: todoId
                 KeyType: RANGE
             Projection:
               ProjectionType: ALL
+
+        
+
+
+    
