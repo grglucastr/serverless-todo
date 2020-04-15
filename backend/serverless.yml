@@ -35,6 +35,13 @@ functions:
         http:
           method: get
           path: todos
+  CreateTodo:
+    handler: src/lambda/http/createTodo.handler
+    events:
+      -
+        http:
+          method: post
+          path: todos
 
 resources:
   Resources:
@@ -48,7 +55,7 @@ resources:
             AttributeName: userId
             AttributeType: S
           -
-            AttributeName: timestamp
+            AttributeName: createdAt
             AttributeType: S
           -
             AttributeName: todoId
@@ -58,7 +65,7 @@ resources:
             AttributeName: userId
             KeyType: HASH
           -
-            AttributeName: timestamp
+            AttributeName: createdAt
             KeyType: RANGE
         LocalSecondaryIndexes:
           -
