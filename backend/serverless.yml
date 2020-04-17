@@ -1,9 +1,24 @@
 service:
   name: grg-serverless-todo-app
 
+custom:
+  dynamodb:
+    stages:
+      - test
+      - dev
+    start:
+      port: 8888
+      inMemory: true
+      migrate: true
+  
+  serverless-offline:
+    httpPort: 3333
+
 plugins:
   - serverless-iam-roles-per-function
   - serverless-webpack
+  - serverless-offline
+  - serverless-dynamodb-local
 
 provider:
   name: aws
@@ -14,7 +29,9 @@ provider:
 
   environment:
     TODOS_TABLE: Todos-${self:provider.stage}
-    INDEX_NAME: grg-todo-id-idx
+    INDEX_NAME: userIdAndTodoIdIndex
+    LOCAL_DATABASE_PORT: 8888
+    LOCAL_DATABASE_ENDPOINT: http://localhost
 
   iamRoleStatements:
     -
@@ -23,6 +40,7 @@ provider:
       Action:
         - dynamodb:Query
         - dynamodb:PutItem
+        - dynamodb:UpdateItem
 
 package:
   individually: true
@@ -42,6 +60,14 @@ functions:
         http:
           method: post
           path: todos
+  UpdateTodo:
+    handler: src/lambda/http/updateTodo.handler
+    events:
+      -
+        http:
+          method: patch
+          path: todos/{todoId}
+          
 
 resources:
   Resources:
