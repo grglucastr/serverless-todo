@@ -1,13 +1,12 @@
-import 'source-map-support/register';
-import * as uuid from 'uuid';
-import * as AWS from 'aws-sdk';
-
 import { APIGatewayProxyEvent, APIGatewayProxyHandler, APIGatewayProxyResult } from 'aws-lambda';
 import { CreateTodoRequest } from '../../requests/CreateTodoRequest';
 import { TodoItem } from '../../models/TodoItem';
+import { databaseConnection } from '../../utils/dbclient';
+import 'source-map-support/register';
+import * as uuid from 'uuid';
 
 const todosTable = process.env.TODOS_TABLE;
-const docClient = new AWS.DynamoDB.DocumentClient();
+const docClient = databaseConnection();
 
 export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   const newTodo: CreateTodoRequest = JSON.parse(event.body);
