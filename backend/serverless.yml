@@ -32,6 +32,9 @@ provider:
     INDEX_NAME: userIdAndTodoIdIndex
     LOCAL_DATABASE_PORT: 8888
     LOCAL_DATABASE_ENDPOINT: http://localhost
+    IMAGES_BUCKET_NAME: grg-serverless-app-images-bucket
+    AWS_REGION: ${self:provider.region}
+    SIGNED_URL_EXPIRATION: 60 #in seconds
 
 package:
   individually: true
@@ -50,6 +53,7 @@ functions:
         Effect: Allow
         Action:
           - dynamodb:PutItem
+
   RetrieveTodos:
     handler: src/lambda/http/getTodos.handler
     events:
@@ -63,6 +67,7 @@ functions:
         Effect: Allow
         Action:
           - dynamodb:Query
+
   UpdateTodos:
     handler: src/lambda/http/updateTodo.handler
     events:
@@ -77,6 +82,7 @@ functions:
         Action:
           - dynamodb:Query
           - dynamodb:UpdateItem
+
   DeleteTodo:
     handler: src/lambda/http/deleteTodo.handler
     events:
@@ -91,6 +97,20 @@ functions:
         Action:
           - dynamodb:Query
           - dynamodb:DeleteItem
+
+  GetUploadUrl:
+    handler: src/lambda/http/generateUploadUrl.handler
+    events:
+      -
+        http:
+          method: get
+          path: image-urls
+    iamRoleStatements:
+      -
+        Resource: arn:aws:s3:${self:provider.region}:*:table/${self:provider.environment.IMAGES_BUCKET_NAME}
+        Effect: Allow
+        Action:
+          - s3:getObject
 
 resources:
   Resources:
@@ -128,3 +148,24 @@ resources:
                 KeyType: RANGE
             Projection:
               ProjectionType: ALL
+
+    ImagesBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: ${self:provider.enviroment.IMAGES_BUCKET_NAME}
+        CorsConfiguration:
+          CorsRules:
+            -
+              AllowedHeaders:
+                - '*'
+              AllowedMethods:
+                - POST
+                - GET
+                - HEAD
+                - PUT
+                - DELETE
+              AllowedOrigins:
+                -
+                  '*'
+              MaxAge: 120
+                
