@@ -33,16 +33,6 @@ provider:
     LOCAL_DATABASE_PORT: 8888
     LOCAL_DATABASE_ENDPOINT: http://localhost
 
-  iamRoleStatements:
-    -
-      Effect: Allow
-      Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}
-      Action:
-        - dynamodb:Query
-        - dynamodb:PutItem
-        - dynamodb:UpdateItem
-        - dynamodb:DeleteItem
-
 package:
   individually: true
 
@@ -54,6 +44,12 @@ functions:
         http:
           method: post
           path: todos
+    iamRoleStatements:
+      -
+        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}
+        Effect: Allow
+        Action:
+          - dynamodb:PutItem
   RetrieveTodos:
     handler: src/lambda/http/getTodos.handler
     events:
@@ -61,6 +57,12 @@ functions:
         http:
           method: get
           path: todos
+    iamRoleStatements:
+      -
+        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}
+        Effect: Allow
+        Action:
+          - dynamodb:Query
   UpdateTodos:
     handler: src/lambda/http/updateTodo.handler
     events:
@@ -68,6 +70,13 @@ functions:
         http:
           method: patch
           path: todos/{todoId}
+    iamRoleStatements:
+      -
+        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}
+        Effect: Allow
+        Action:
+          - dynamodb:Query
+          - dynamodb:UpdateItem
   DeleteTodo:
     handler: src/lambda/http/deleteTodo.handler
     events:
@@ -75,6 +84,13 @@ functions:
         http:
           method: delete
           path: todos/{todoId}
+    iamRoleStatements:
+      -
+        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}
+        Effect: Allow
+        Action:
+          - dynamodb:Query
+          - dynamodb:DeleteItem
 
 resources:
   Resources:
