@@ -28,12 +28,12 @@ provider:
   region: ${opt:region, 'us-east-1'}
 
   environment:
+    APP_REGION: ${self:provider.region}
     TODOS_TABLE: Todos-${self:provider.stage}
     INDEX_NAME: userIdAndTodoIdIndex
     LOCAL_DATABASE_PORT: 8888
     LOCAL_DATABASE_ENDPOINT: http://localhost
     IMAGES_BUCKET_NAME: grg-serverless-app-images-bucket
-    AWS_REGION: ${self:provider.region}
     SIGNED_URL_EXPIRATION: 60 #in seconds
 
 package:
@@ -104,13 +104,13 @@ functions:
       -
         http:
           method: get
-          path: image-urls
+          path: image-urls/{todoId}
     iamRoleStatements:
       -
-        Resource: arn:aws:s3:${self:provider.region}:*:table/${self:provider.environment.IMAGES_BUCKET_NAME}
+        Resource: arn:aws:s3:::${self:provider.environment.IMAGES_BUCKET_NAME}/*
         Effect: Allow
         Action:
-          - s3:getObject
+          - s3:PutObject
 
 resources:
   Resources:
@@ -152,10 +152,12 @@ resources:
     ImagesBucket:
       Type: AWS::S3::Bucket
       Properties:
-        BucketName: ${self:provider.enviroment.IMAGES_BUCKET_NAME}
+        BucketName: ${self:provider.environment.IMAGES_BUCKET_NAME}
         CorsConfiguration:
           CorsRules:
             -
+              AllowedOrigins:
+                - '*'
               AllowedHeaders:
                 - '*'
               AllowedMethods:
@@ -164,8 +166,19 @@ resources:
                 - HEAD
                 - PUT
                 - DELETE
-              AllowedOrigins:
-                -
-                  '*'
-              MaxAge: 120
-                
+              MaxAge: 100
+    
+    BucketPolicy:
+      Type: AWS::S3::BucketPolicy
+      Properties:
+        Bucket: !Ref ImagesBucket
+        PolicyDocument:
+          Id: MyPolicy
+          Version: "2012-10-17"
+          Statement:
+            -
+              Sid: PublicReadForGetObjects
+              Effect: Allow
+              Principal: '*'
+              Action: 's3:GetObject'
+              Resource: 'arn:aws:s3:::${self:provider.environment.IMAGES_BUCKET_NAME}/*'

@@ -2,10 +2,9 @@ import { APIGatewayProxyEvent, APIGatewayProxyResult, APIGatewayProxyHandler } f
 import * as AWS from 'aws-sdk';
 import 'source-map-support/register'
 
-const bucketName = process.env.bucketName;
-const awsRegion = process.env.AWS_REGION;
-const expirationTime = 2 * parseInt(process.env.SIGNED_URL_EXPIRATION);
-
+const bucketName = process.env.IMAGES_BUCKET_NAME;
+const appRegion = process.env.APP_REGION;
+const expirationTime = parseInt(process.env.SIGNED_URL_EXPIRATION);
 
 export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   const todoId = event.pathParameters.todoId
@@ -13,11 +12,11 @@ export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEven
 
   const s3 = new AWS.S3({
     signatureVersion: 'v4',
-    region: awsRegion,
+    region: appRegion,
     params: {Bucket: bucketName}
   });
 
-  const url = s3.getSignedUrl('getObject', {
+  const url = s3.getSignedUrl('putObject', {
     Bucket: bucketName,
     Key: todoId,
     Expires: expirationTime
@@ -28,7 +27,6 @@ export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEven
     url
   }
   
-  // TODO: Return a presigned URL to upload a file for a TODO item with the provided id
   return {
     statusCode: 200,
     body: JSON.stringify(responseBody)
