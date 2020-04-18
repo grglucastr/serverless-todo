@@ -6,19 +6,21 @@ import 'source-map-support/register';
 import * as uuid from 'uuid';
 
 const todosTable = process.env.TODOS_TABLE;
+const imagesBucket =  process.env.IMAGES_BUCKET_NAME;
 const docClient = databaseConnection();
 
 export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   const newTodo: CreateTodoRequest = JSON.parse(event.body);
-  console.log('newTodo: ', newTodo);
-
+  const todoId = uuid.v4();
+  
   const todo: TodoItem = {
     createdAt: new Date().toISOString(),
     done: false,
     dueDate: newTodo.dueDate,
     name: newTodo.name,
-    todoId: uuid.v4(),
+    todoId: todoId,
     userId: "1",
+    attachmentUrl: `https://${imagesBucket}.s3.amazonaws.com/${todoId}`
   }
 
   await docClient.put({
