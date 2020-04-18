@@ -1,63 +1,184 @@
 service:
-  name: serverless-todo-app
+  name: grg-serverless-todo-app
+
+custom:
+  dynamodb:
+    stages:
+      - test
+      - dev
+    start:
+      port: 8888
+      inMemory: true
+      migrate: true
+  
+  serverless-offline:
+    httpPort: 3333
 
 plugins:
-  - serverless-webpack
   - serverless-iam-roles-per-function
+  - serverless-webpack
+  - serverless-offline
+  - serverless-dynamodb-local
 
 provider:
   name: aws
-  runtime: nodejs8.10
+  runtime: nodejs12.x
 
   stage: ${opt:stage, 'dev'}
   region: ${opt:region, 'us-east-1'}
 
+  environment:
+    APP_REGION: ${self:provider.region}
+    TODOS_TABLE: Todos-${self:provider.stage}
+    INDEX_NAME: userIdAndTodoIdIndex
+    LOCAL_DATABASE_PORT: 8888
+    LOCAL_DATABASE_ENDPOINT: http://localhost
+    IMAGES_BUCKET_NAME: grg-serverless-app-images-bucket
+    SIGNED_URL_EXPIRATION: 60 #in seconds
+
+package:
+  individually: true
+
 functions:
-
-  Auth:
-    handler: src/lambda/auth/auth0Authorizer.handler
-
-  # TODO: Configure this function
-  GetTodos:
-    handler: src/lambda/http/getTodos.handler
-    events:
-      - http:
-          method: get
-          path: todos
-
-  # TODO: Configure this function
-  GetTodos:
-  CreateTodo:
+  CreateTodos:
     handler: src/lambda/http/createTodo.handler
     events:
-      - http:
+      -
+        http:
           method: post
           path: todos
+    iamRoleStatements:
+      -
+        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}
+        Effect: Allow
+        Action:
+          - dynamodb:PutItem
 
-  # TODO: Configure this function
-  UpdateTodo:
+  RetrieveTodos:
+    handler: src/lambda/http/getTodos.handler
+    events:
+      -
+        http:
+          method: get
+          path: todos
+    iamRoleStatements:
+      -
+        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}
+        Effect: Allow
+        Action:
+          - dynamodb:Query
+
+  UpdateTodos:
     handler: src/lambda/http/updateTodo.handler
     events:
-      - http:
+      -
+        http:
           method: patch
           path: todos/{todoId}
+    iamRoleStatements:
+      -
+        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}
+        Effect: Allow
+        Action:
+          - dynamodb:Query
+          - dynamodb:UpdateItem
 
-  # TODO: Configure this function
   DeleteTodo:
     handler: src/lambda/http/deleteTodo.handler
     events:
-      - http:
+      -
+        http:
           method: delete
           path: todos/{todoId}
+    iamRoleStatements:
+      -
+        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}
+        Effect: Allow
+        Action:
+          - dynamodb:Query
+          - dynamodb:DeleteItem
 
-  # TODO: Configure this function
-  GenerateUploadUrl:
+  GetUploadUrl:
     handler: src/lambda/http/generateUploadUrl.handler
     events:
-      - http:
-          method: post
-          path: todos/{todoId}/attachment
+      -
+        http:
+          method: get
+          path: image-urls/{todoId}
+    iamRoleStatements:
+      -
+        Resource: arn:aws:s3:::${self:provider.environment.IMAGES_BUCKET_NAME}/*
+        Effect: Allow
+        Action:
+          - s3:PutObject
 
 resources:
   Resources:
-    # TODO: Add any necessary AWS resources
+    ServerlessTodoTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:provider.environment.TODOS_TABLE}
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          -
+            AttributeName: userId
+            AttributeType: S
+          -
+            AttributeName: createdAt
+            AttributeType: S
+          -
+            AttributeName: todoId
+            AttributeType: S
+        KeySchema:
+          -
+            AttributeName: userId
+            KeyType: HASH
+          -
+            AttributeName: createdAt
+            KeyType: RANGE
+        LocalSecondaryIndexes:
+          -
+            IndexName: ${self:provider.environment.INDEX_NAME}
+            KeySchema:
+              - 
+                AttributeName: userId
+                KeyType: HASH
+              - 
+                AttributeName: todoId
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
+
+    ImagesBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: ${self:provider.environment.IMAGES_BUCKET_NAME}
+        CorsConfiguration:
+          CorsRules:
+            -
+              AllowedOrigins:
+                - '*'
+              AllowedHeaders:
+                - '*'
+              AllowedMethods:
+                - POST
+                - GET
+                - HEAD
+                - PUT
+                - DELETE
+              MaxAge: 100
+    
+    BucketPolicy:
+      Type: AWS::S3::BucketPolicy
+      Properties:
+        Bucket: !Ref ImagesBucket
+        PolicyDocument:
+          Id: MyPolicy
+          Version: "2012-10-17"
+          Statement:
+            -
+              Sid: PublicReadForGetObjects
+              Effect: Allow
+              Principal: '*'
+              Action: 's3:GetObject'
+              Resource: 'arn:aws:s3:::${self:provider.environment.IMAGES_BUCKET_NAME}/*'
