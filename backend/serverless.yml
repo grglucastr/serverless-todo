@@ -41,33 +41,40 @@ provider:
         - dynamodb:Query
         - dynamodb:PutItem
         - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
 
 package:
   individually: true
 
 functions:
-  GetTodos:
-    handler: src/lambda/http/getTodos.handler
-    events:
-      -
-        http:
-          method: get
-          path: todos
-  CreateTodo:
+  CreateTodos:
     handler: src/lambda/http/createTodo.handler
     events:
       -
         http:
           method: post
           path: todos
-  UpdateTodo:
+  RetrieveTodos:
+    handler: src/lambda/http/getTodos.handler
+    events:
+      -
+        http:
+          method: get
+          path: todos
+  UpdateTodos:
     handler: src/lambda/http/updateTodo.handler
     events:
       -
         http:
           method: patch
           path: todos/{todoId}
-          
+  DeleteTodo:
+    handler: src/lambda/http/deleteTodo.handler
+    events:
+      -
+        http:
+          method: delete
+          path: todos/{todoId}
 
 resources:
   Resources:
@@ -105,8 +112,3 @@ resources:
                 KeyType: RANGE
             Projection:
               ProjectionType: ALL
-
-        
-
-
-    
