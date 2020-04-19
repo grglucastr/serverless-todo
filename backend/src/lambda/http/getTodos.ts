@@ -1,5 +1,6 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult, APIGatewayProxyHandler } from 'aws-lambda'
 import { databaseConnection } from '../../utils/dbclient';
+import { parseUserId } from '../../auth/utils';
 import 'source-map-support/register'
 
 const docClient = databaseConnection();
@@ -8,6 +9,10 @@ const todosTable = process.env.TODOS_TABLE;
 export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   // TODO: Get all TODO items for a current user
   console.log('event: ', event);
+  const authorization = event.headers.Authorization;
+  const split = authorization.split(' ');
+  const jwtToken = split[1];
+  const userId = parseUserId(jwtToken);
 
   const params = {
     TableName : todosTable,
@@ -16,7 +21,7 @@ export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEven
         "#uId": "userId"
     },
     ExpressionAttributeValues: {
-        ":uId":"1"
+        ":uId":userId
     }
   }
 

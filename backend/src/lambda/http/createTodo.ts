@@ -2,6 +2,7 @@ import { APIGatewayProxyEvent, APIGatewayProxyHandler, APIGatewayProxyResult } f
 import { CreateTodoRequest } from '../../requests/CreateTodoRequest';
 import { TodoItem } from '../../models/TodoItem';
 import { databaseConnection } from '../../utils/dbclient';
+import { parseUserId } from '../../auth/utils';
 import 'source-map-support/register';
 import * as uuid from 'uuid';
 
@@ -12,14 +13,19 @@ const docClient = databaseConnection();
 export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   const newTodo: CreateTodoRequest = JSON.parse(event.body);
   const todoId = uuid.v4();
-  
+
+  const authorization = event.headers.Authorization;
+  const split = authorization.split(' ');
+  const jwtToken = split[1];
+
+  const userId = parseUserId(jwtToken);  
   const todo: TodoItem = {
     createdAt: new Date().toISOString(),
     done: false,
     dueDate: newTodo.dueDate,
     name: newTodo.name,
     todoId: todoId,
-    userId: "1",
+    userId,
     attachmentUrl: `https://${imagesBucket}.s3.amazonaws.com/${todoId}`
   }
 

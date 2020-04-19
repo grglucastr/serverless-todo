@@ -8,8 +8,6 @@ const expirationTime = parseInt(process.env.SIGNED_URL_EXPIRATION);
 
 export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   const todoId = event.pathParameters.todoId
-  console.log('todoId: ', todoId);
-
   const s3 = new AWS.S3({
     signatureVersion: 'v4',
     region: appRegion,
