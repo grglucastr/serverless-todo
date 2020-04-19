@@ -107,8 +107,8 @@ functions:
     events:
       -
         http:
-          method: get
-          path: image-urls/{todoId}
+          method: post
+          path: /todos/{todoId}/attachment
           cors: true
     iamRoleStatements:
       -

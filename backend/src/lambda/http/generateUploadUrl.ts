@@ -21,15 +21,13 @@ export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEven
     Key: todoId,
     Expires: expirationTime
   });
-
-  const responseBody = {
-    todoId,
-    url
-  }
   
   return {
     statusCode: 200,
-    body: JSON.stringify(responseBody)
+    headers:{
+      'Access-Control-Allow-Origin':'*'
+    },
+    body: JSON.stringify({uploadUrl: url})
   };
 }
 
