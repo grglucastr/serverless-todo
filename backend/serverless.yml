@@ -40,6 +40,10 @@ package:
   individually: true
 
 functions:
+
+  RS256Auth:
+    handler: src/lambda/auth/auth0Authorizer.handler
+
   CreateTodos:
     handler: src/lambda/http/createTodo.handler
     events:
@@ -63,6 +67,7 @@ functions:
           method: get
           path: todos
           cors: true
+          authorizer: RS256Auth
     iamRoleStatements:
       -
         Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}
