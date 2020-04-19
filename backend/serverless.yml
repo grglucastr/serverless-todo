@@ -52,6 +52,7 @@ functions:
           method: post
           path: todos
           cors: true
+          authorizer: RS256Auth
     iamRoleStatements:
       -
         Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}
@@ -83,6 +84,7 @@ functions:
           method: patch
           path: todos/{todoId}
           cors: true
+          authorizer: RS256Auth
     iamRoleStatements:
       -
         Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}
@@ -99,6 +101,7 @@ functions:
           method: delete
           path: todos/{todoId}
           cors: true
+          authorizer: RS256Auth
     iamRoleStatements:
       -
         Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}
