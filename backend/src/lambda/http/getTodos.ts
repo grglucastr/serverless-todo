@@ -21,13 +21,14 @@ export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEven
   }
 
   const todosForUser1 = await docClient.query(params).promise();
+  const response = {items:todosForUser1.Items};
 
   return {
     statusCode: 200,
     headers:{
       'Access-Control-Allow-Origin':'*'
     },
-    body: JSON.stringify(todosForUser1)
+    body: JSON.stringify(response)
   }
 
 }

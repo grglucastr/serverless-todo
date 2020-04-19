@@ -25,14 +25,21 @@ export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEven
 
   await docClient.put({
     TableName: todosTable,
-    Item: todo
+    Item: todo,
+    ReturnValues: 'ALL_OLD'
   }).promise();
 
+  const response = {
+    item:{
+      ...todo
+    }
+  }
+  
   return {
     statusCode: 201,
     headers:{
       'Access-Control-Allow-Origin':'*'
     },
-    body: JSON.stringify(todo)
+    body: JSON.stringify(response)
   }
 }
