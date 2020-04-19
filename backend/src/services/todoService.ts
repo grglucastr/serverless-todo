@@ -17,9 +17,18 @@ export class TodosService{
         ":uId":userId
       }
     }
-
+    
     const response = await docClient.query(params).promise();
     return response.Items as TodoItem[];
   }
 
+  async createTodo(newTodo: TodoItem): Promise<TodoItem> {   
+    await docClient.put({
+      TableName: todosTable,
+      Item: newTodo,
+      ReturnValues: 'ALL_OLD'
+    }).promise();
+
+    return newTodo;
+  }
 }
