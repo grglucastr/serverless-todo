@@ -22,6 +22,19 @@ export class TodosService{
     return response.Items as TodoItem[];
   }
 
+  async getTodoById(userId:string, todoId: string): Promise<TodoItem> {
+    const response = await docClient.query({
+      TableName: todosTable,
+      KeyConditionExpression: "userId = :userId",
+      FilterExpression: "todoId = :todoId",
+      ExpressionAttributeValues: {
+        ":userId": userId,
+        ":todoId": todoId
+      }
+    }).promise();
+    return response.Items[0] as TodoItem;
+  }
+
   async createTodo(newTodo: TodoItem): Promise<TodoItem> {   
     await docClient.put({
       TableName: todosTable,
@@ -30,5 +43,29 @@ export class TodosService{
     }).promise();
 
     return newTodo;
+  }
+
+  async updateTodo(todoUpdate: TodoItem): Promise<TodoItem> {
+    await docClient.update({
+      TableName: todosTable,
+      Key:{
+        'userId': todoUpdate.userId,
+        'createdAt': todoUpdate.createdAt
+      },
+      UpdateExpression: "set #nm = :name, #dd = :dueDate, #dn = :done",
+      ExpressionAttributeNames:{
+        '#nm':'name',
+        '#dd':'dueDate',
+        '#dn':'done',
+      },
+      ExpressionAttributeValues:{
+        ':name': todoUpdate.name,
+        ':dueDate':todoUpdate.dueDate,
+        ':done':todoUpdate.done,
+      },
+      ReturnValues:'UPDATED_NEW'
+    }).promise();
+
+    return todoUpdate as TodoItem;
   }
 }
