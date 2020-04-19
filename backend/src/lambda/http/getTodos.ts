@@ -1,32 +1,16 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult, APIGatewayProxyHandler } from 'aws-lambda'
-import { databaseConnection } from '../../utils/dbclient';
-import { parseUserId } from '../../auth/utils';
+import { parseUserId, extractJwtFromHeader } from '../../auth/utils'
+import {getTodos} from '../../businessLogic/todos';
 import 'source-map-support/register'
 
-const docClient = databaseConnection();
-const todosTable = process.env.TODOS_TABLE;
-
 export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
-  // TODO: Get all TODO items for a current user
   console.log('event: ', event);
-  const authorization = event.headers.Authorization;
-  const split = authorization.split(' ');
-  const jwtToken = split[1];
+  
+  const jwtToken = extractJwtFromHeader(event.headers.Authorization);
   const userId = parseUserId(jwtToken);
 
-  const params = {
-    TableName : todosTable,
-    KeyConditionExpression: "#uId = :uId",
-    ExpressionAttributeNames:{
-        "#uId": "userId"
-    },
-    ExpressionAttributeValues: {
-        ":uId":userId
-    }
-  }
-
-  const todosForUser1 = await docClient.query(params).promise();
-  const response = {items:todosForUser1.Items};
+  const todos = await getTodos(userId);
+  const response = {items: todos};
 
   return {
     statusCode: 200,
