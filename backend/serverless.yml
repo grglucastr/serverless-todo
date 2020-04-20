@@ -45,6 +45,9 @@ provider:
   stage: ${opt:stage, 'dev'}
   region: ${opt:region, 'us-east-1'}
 
+  apiGateway:
+    minimumCompressionSize: 1024
+
   environment:
     APP_REGION: ${self:provider.region}
     TODOS_TABLE: Todos-${self:provider.stage}
