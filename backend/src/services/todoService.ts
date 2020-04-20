@@ -68,4 +68,14 @@ export class TodosService{
 
     return todoUpdate as TodoItem;
   }
+
+  async deleteTodo(todo: TodoItem): Promise<void>  {
+    await docClient.delete({
+      TableName: todosTable,
+      Key:{
+        'userId':todo.userId,
+        'createdAt': todo.createdAt
+      }
+    }).promise();
+  }
 }

@@ -39,3 +39,7 @@ export const updateTodo = (foundTodo: TodoItem, todoUpdate: UpdateTodoRequest): 
 
   return todosService.updateTodo(updateItem);
 }
+
+export const deleteTodo = (todo: TodoItem): Promise<void> => {
+  return todosService.deleteTodo(todo);
+}
