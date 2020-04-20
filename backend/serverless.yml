@@ -35,7 +35,11 @@ provider:
     LOCAL_DATABASE_ENDPOINT: http://localhost
     IMAGES_BUCKET_NAME: grg-serverless-app-images-bucket
     SIGNED_URL_EXPIRATION: 60 #in seconds
-
+  
+  tracing:
+    lambda: true
+    apiGeteway: true
+    
 package:
   individually: true
 
@@ -59,6 +63,12 @@ functions:
         Effect: Allow
         Action:
           - dynamodb:PutItem
+      -
+        Resource: '*'
+        Effect: Allow
+        Action: 
+          - xray:PutTraceSegments
+          - xray:PutTelemetryRecords
 
   RetrieveTodos:
     handler: src/lambda/http/getTodos.handler
@@ -75,6 +85,12 @@ functions:
         Effect: Allow
         Action:
           - dynamodb:Query
+      -
+        Resource: '*'
+        Effect: Allow
+        Action: 
+          - xray:PutTraceSegments
+          - xray:PutTelemetryRecords
 
   UpdateTodos:
     handler: src/lambda/http/updateTodo.handler
@@ -92,6 +108,12 @@ functions:
         Action:
           - dynamodb:Query
           - dynamodb:UpdateItem
+      -
+        Resource: '*'
+        Effect: Allow
+        Action: 
+          - xray:PutTraceSegments
+          - xray:PutTelemetryRecords
 
   DeleteTodo:
     handler: src/lambda/http/deleteTodo.handler
@@ -109,6 +131,12 @@ functions:
         Action:
           - dynamodb:Query
           - dynamodb:DeleteItem
+      -
+        Resource: '*'
+        Effect: Allow
+        Action: 
+          - xray:PutTraceSegments
+          - xray:PutTelemetryRecords
 
   GetUploadUrl:
     handler: src/lambda/http/generateUploadUrl.handler
@@ -124,6 +152,12 @@ functions:
         Effect: Allow
         Action:
           - s3:PutObject
+      -
+        Resource: '*'
+        Effect: Allow
+        Action: 
+          - xray:PutTraceSegments
+          - xray:PutTelemetryRecords
 
 resources:
   Resources:
