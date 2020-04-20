@@ -14,11 +14,29 @@ custom:
   serverless-offline:
     httpPort: 3333
 
+  documentation:
+    api:
+      info:
+        version: v1.0.0
+        title: Serverless TODO App for Udacity
+        description: Simple TODO app for a POC of AWS Lambda and Serverless technology
+        contact:
+          name: "George Bentes"
+          url: "https://github.com/grglucastr"
+          email: "george.bentes@gmail.com"
+    models:
+      -
+        name: TodoRequest
+        contentType: application/json
+        schema: ${file(docmodels/create-todoitem-request.json)}
+
 plugins:
   - serverless-iam-roles-per-function
   - serverless-webpack
   - serverless-offline
   - serverless-dynamodb-local
+  - serverless-reqvalidator-plugin
+  - serverless-aws-documentation
 
 provider:
   name: aws
@@ -57,6 +75,12 @@ functions:
           path: todos
           cors: true
           authorizer: RS256Auth
+          reqValidatorName: RequestBodyValidator
+          documentation:
+            summary: Create a new TODO
+            description: It can add new TODO to a list of TODOS
+            requestModels:
+              'application/json': TodoRequest
     iamRoleStatements:
       -
         Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}
@@ -229,3 +253,13 @@ resources:
               Principal: '*'
               Action: 's3:GetObject'
               Resource: 'arn:aws:s3:::${self:provider.environment.IMAGES_BUCKET_NAME}/*'
+
+    RequestBodyValidator:
+      Type: AWS::ApiGateway::RequestValidator
+      Properties:
+        Name: 'request-body-validator'
+        RestApiId:
+          Ref: ApiGatewayRestApi
+        ValidateRequestBody: true
+        ValidateRequestParameters: false
+        
