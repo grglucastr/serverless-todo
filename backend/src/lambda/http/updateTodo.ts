@@ -1,59 +1,34 @@
 import { APIGatewayProxyEvent, APIGatewayProxyHandler, APIGatewayProxyResult } from 'aws-lambda'
 import { UpdateTodoRequest } from '../../requests/UpdateTodoRequest';
-import { TodoItem } from '../../models/TodoItem';
-import { databaseConnection } from '../../utils/dbclient';
+import { parseUserId, extractJwtFromHeader } from '../../auth/utils';
+import { getTodoById, updateTodo } from '../../businessLogic/todos';
 import 'source-map-support/register'
-
-const docClient = databaseConnection();
-const todosTable = process.env.TODOS_TABLE; 
 
 export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   const { todoId } = event.pathParameters;
   const todoUpdate: UpdateTodoRequest = JSON.parse(event.body);
+  
+  const jwtToken = extractJwtFromHeader(event.headers.Authorization);
+  const userId = parseUserId(jwtToken);
 
-  const foundTodo = await getUserTodoById("1", todoId);
+  const foundTodo = await getTodoById(userId, todoId);
   if(!foundTodo){
     return {
       statusCode: 404,
+      headers:{
+        'Access-Control-Allow-Origin':'*'
+      },
       body: JSON.stringify({message:'Todo not found.'})
     };
   }
 
-  const updated = await docClient.update({
-    TableName: todosTable,
-    Key:{
-      'userId': foundTodo.userId,
-      'createdAt': foundTodo.createdAt
-    },
-    UpdateExpression: "set #nm = :name, #dd = :dueDate, #dn = :done",
-    ExpressionAttributeNames:{
-      '#nm':'name',
-      '#dd':'dueDate',
-      '#dn':'done',
-    },
-    ExpressionAttributeValues:{
-      ':name': todoUpdate.name,
-      ':dueDate':todoUpdate.dueDate,
-      ':done':todoUpdate.done,
-    },
-    ReturnValues:'UPDATED_NEW'
-  }).promise();
+  const updated = await updateTodo(foundTodo, todoUpdate);
 
   return {
     statusCode: 200,
-    body: JSON.stringify({...foundTodo, ...updated.Attributes})
+    headers:{
+      'Access-Control-Allow-Origin':'*'
+    },
+    body: JSON.stringify(updated)
   };
-}
-
-async function getUserTodoById(userId:string, todoId:string): Promise<TodoItem>{
-  const response = await docClient.query({
-    TableName: todosTable,
-    KeyConditionExpression: "userId = :userId",
-    FilterExpression: "todoId = :todoId",
-    ExpressionAttributeValues: {
-      ":userId": userId,
-      ":todoId": todoId
-    }
-  }).promise();
-  return response.Items[0] as TodoItem;
 }

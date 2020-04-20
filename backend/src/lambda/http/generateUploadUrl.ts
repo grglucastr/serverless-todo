@@ -8,8 +8,6 @@ const expirationTime = parseInt(process.env.SIGNED_URL_EXPIRATION);
 
 export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   const todoId = event.pathParameters.todoId
-  console.log('todoId: ', todoId);
-
   const s3 = new AWS.S3({
     signatureVersion: 'v4',
     region: appRegion,
@@ -21,15 +19,13 @@ export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEven
     Key: todoId,
     Expires: expirationTime
   });
-
-  const responseBody = {
-    todoId,
-    url
-  }
   
   return {
     statusCode: 200,
-    body: JSON.stringify(responseBody)
+    headers:{
+      'Access-Control-Allow-Origin':'*'
+    },
+    body: JSON.stringify({uploadUrl: url})
   };
 }
 
